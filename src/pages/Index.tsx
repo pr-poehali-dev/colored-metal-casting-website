@@ -1,11 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
-type Section = 'home' | 'about' | 'copper' | 'aluminum' | 'news' | 'contacts' | 'partnership' | 'dealers';
+type Section = 'home' | 'about' | 'copper' | 'aluminum' | 'news' | 'contacts' | 'partnership' | 'dealers' | 'gallery';
+
+const productionImages = [
+  { id: 1, url: 'https://cdn.poehali.dev/projects/65b07cf6-29a0-4af5-81c8-8ac736ac9f73/files/2812d7eb-15c0-4c6e-94a1-9387c09a13c2.jpg', title: 'Медное производство', description: 'Литейный цех медного дивизиона' },
+  { id: 2, url: 'https://cdn.poehali.dev/projects/65b07cf6-29a0-4af5-81c8-8ac736ac9f73/files/78cde790-52d6-48b0-a79e-f42e7d35a264.jpg', title: 'Алюминиевый завод', description: 'Современное оборудование для производства алюминия' },
+  { id: 3, url: 'https://cdn.poehali.dev/projects/65b07cf6-29a0-4af5-81c8-8ac736ac9f73/files/7892cd9b-ad45-4eb8-aef3-d30ddd8cfd89.jpg', title: 'Литейный процесс', description: 'Заливка расплавленного металла' },
+  { id: 4, url: 'https://cdn.poehali.dev/projects/65b07cf6-29a0-4af5-81c8-8ac736ac9f73/files/7ea7b1f8-30ff-474d-85d3-7237e64a1834.jpg', title: 'Контроль качества', description: 'Лаборатория тестирования продукции' },
+];
 
 const copperProducts = [
   { id: 1, name: 'Медная катанка M1', diameter: '8 мм', standard: 'ГОСТ 859-2001', weight: '3000 кг' },
@@ -31,6 +42,25 @@ const news = [
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState<Section>('home');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % productionImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: 'Заявка отправлена!',
+      description: 'Мы свяжемся с вами в ближайшее время.',
+    });
+    setFormData({ name: '', email: '', phone: '', message: '' });
+  };
 
   const scrollToSection = (section: Section) => {
     setActiveSection(section);
@@ -83,6 +113,10 @@ export default function Index() {
                 <Icon name="MapPin" size={16} className="mr-1" />
                 Дилеры
               </Button>
+              <Button variant="ghost" onClick={() => scrollToSection('gallery')} className="text-sm">
+                <Icon name="Image" size={16} className="mr-1" />
+                Галерея
+              </Button>
               <Button variant="ghost" onClick={() => scrollToSection('contacts')} className="text-sm">
                 <Icon name="Mail" size={16} className="mr-1" />
                 Контакты
@@ -93,30 +127,76 @@ export default function Index() {
       </nav>
 
       <main className="pt-20">
-        <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#F97316]/10 via-[#9b87f5]/10 to-[#0EA5E9]/10"></div>
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-4xl mx-auto text-center animate-fade-in">
-              <h2 className="text-6xl font-extrabold mb-6 bg-gradient-to-r from-[#F97316] via-[#9b87f5] to-[#0EA5E9] bg-clip-text text-transparent">
-                Лидер в производстве цветных металлов
-              </h2>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                Медь и алюминий высочайшего качества для промышленности России и СНГ. 
-                Современные технологии литья и многолетний опыт работы.
-              </p>
-              <div className="flex gap-4 justify-center flex-wrap">
-                <Button size="lg" onClick={() => scrollToSection('copper')} className="bg-[#F97316] hover:bg-[#ea580c] text-white shadow-xl">
-                  <Icon name="Sparkles" size={20} className="mr-2" />
-                  Медный дивизион
-                </Button>
-                <Button size="lg" onClick={() => scrollToSection('aluminum')} className="bg-[#0EA5E9] hover:bg-[#0284c7] text-white shadow-xl">
-                  <Icon name="Zap" size={20} className="mr-2" />
-                  Алюминиевый дивизион
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => scrollToSection('contacts')} className="shadow-xl">
-                  <Icon name="Phone" size={20} className="mr-2" />
-                  Связаться с нами
-                </Button>
+        <section id="home" className="min-h-screen flex flex-col">
+          <div className="relative h-[500px] overflow-hidden">
+            {productionImages.map((image, index) => (
+              <div
+                key={image.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === currentSlide ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <img
+                  src={image.url}
+                  alt={image.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                <div className="absolute bottom-10 left-0 right-0 text-center text-white z-10">
+                  <h3 className="text-3xl font-bold mb-2">{image.title}</h3>
+                  <p className="text-lg">{image.description}</p>
+                </div>
+              </div>
+            ))}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+              {productionImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    index === currentSlide ? 'bg-white w-8' : 'bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + productionImages.length) % productionImages.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full transition-colors z-20"
+            >
+              <Icon name="ChevronLeft" size={24} className="text-white" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % productionImages.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full transition-colors z-20"
+            >
+              <Icon name="ChevronRight" size={24} className="text-white" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center relative bg-gradient-to-br from-[#F97316]/10 via-[#9b87f5]/10 to-[#0EA5E9]/10">
+            <div className="container mx-auto px-4 py-20">
+              <div className="max-w-4xl mx-auto text-center animate-fade-in">
+                <h2 className="text-6xl font-extrabold mb-6 bg-gradient-to-r from-[#F97316] via-[#9b87f5] to-[#0EA5E9] bg-clip-text text-transparent">
+                  Лидер в производстве цветных металлов
+                </h2>
+                <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                  Медь и алюминий высочайшего качества для промышленности России и СНГ. 
+                  Современные технологии литья и многолетний опыт работы.
+                </p>
+                <div className="flex gap-4 justify-center flex-wrap">
+                  <Button size="lg" onClick={() => scrollToSection('copper')} className="bg-[#F97316] hover:bg-[#ea580c] text-white shadow-xl">
+                    <Icon name="Sparkles" size={20} className="mr-2" />
+                    Медный дивизион
+                  </Button>
+                  <Button size="lg" onClick={() => scrollToSection('aluminum')} className="bg-[#0EA5E9] hover:bg-[#0284c7] text-white shadow-xl">
+                    <Icon name="Zap" size={20} className="mr-2" />
+                    Алюминиевый дивизион
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => scrollToSection('contacts')} className="shadow-xl">
+                    <Icon name="Phone" size={20} className="mr-2" />
+                    Связаться с нами
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -441,7 +521,42 @@ export default function Index() {
           </div>
         </section>
 
-        <section id="contacts" className="py-24 bg-gradient-to-br from-gray-50 to-white">
+        <section id="gallery" className="py-24 bg-gradient-to-br from-gray-50 to-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#F97316] via-[#9b87f5] to-[#0EA5E9] flex items-center justify-center mb-6 mx-auto shadow-xl">
+                  <Icon name="Image" size={40} className="text-white" />
+                </div>
+                <h2 className="text-5xl font-bold mb-6 text-[#1A1F2C]">Галерея производства</h2>
+                <p className="text-xl text-gray-600">Наши производственные мощности и технологии</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                {productionImages.map((image, index) => (
+                  <Card key={image.id} className="border-2 overflow-hidden hover:shadow-2xl transition-all hover:scale-[1.02] animate-fade-in group" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src={image.url}
+                        alt={image.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <Icon name="Factory" size={24} className={index % 2 === 0 ? "text-[#F97316]" : "text-[#0EA5E9]"} />
+                        {image.title}
+                      </CardTitle>
+                      <CardDescription className="text-base">{image.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="contacts" className="py-24 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -509,6 +624,65 @@ export default function Index() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="mt-8 border-2 shadow-2xl">
+                <CardHeader className="bg-gradient-to-r from-[#9b87f5]/10 to-transparent">
+                  <CardTitle className="text-2xl text-[#9b87f5]">Отправить заявку</CardTitle>
+                  <CardDescription>Заполните форму и мы свяжемся с вами в ближайшее время</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Имя *</Label>
+                        <Input
+                          id="name"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Ваше имя"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Телефон *</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="+7 (___) ___-__-__"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Сообщение</Label>
+                      <Textarea
+                        id="message"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        placeholder="Расскажите о вашей потребности в продукции..."
+                        rows={5}
+                      />
+                    </div>
+                    <Button type="submit" size="lg" className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white">
+                      <Icon name="Send" size={20} className="mr-2" />
+                      Отправить заявку
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
